@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Forex Trading Monitor</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #1a1a1a;
+            color: #ffffff;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        h1 {
+            text-align: center;
+            color: #4CAF50;
+            margin-bottom: 30px;
+        }
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 20px;
+        }
+        .card {
+            background: #2d2d2d;
+            border-radius: 10px;
+            padding: 20px;
+            border-left: 4px solid #4CAF50;
+            transition: transform 0.2s;
+        }
+        .card:hover {
+            transform: translateY(-5px);
+        }
+        .pair-name {
+            font-size: 1.5em;
+            font-weight: bold;
+            color: #4CAF50;
+            margin-bottom: 10px;
+        }
+        .price {
+            font-size: 1.3em;
+            color: #ffffff;
+            margin-bottom: 15px;
+        }
+        .signal {
+            background: #333;
+            padding: 10px;
+            border-radius: 5px;
+            margin-bottom: 10px;
+        }
+        .signal-label {
+            font-size: 0.9em;
+            color: #888;
+        }
+        .signal-value {
+            font-weight: bold;
+            color: #ffffff;
+        }
+        .trend-bullish {
+            color: #4CAF50;
+        }
+        .trend-bearish {
+            color: #f44336;
+        }
+        .last-update {
+            text-align: right;
+            font-size: 0.8em;
+            color: #888;
+            margin-top: 10px;
+        }
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #888;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔄 Forex Trading Monitor</h1>
+        <div id="data-container">
+            <div class="loading">Loading forex data...</div>
+        </div>
+    </div>
+
+    <script>
+        async function fetchData() {
+            try {
+                const response = await fetch('/api/data');
+                const data = await response.json();
+                updateDisplay(data);
+            } catch (error) {
+                console.error('Error fetching data:', error);
+            }
+        }
+
+        function updateDisplay(data) {
+            const container = document.getElementById('data-container');
+            
+            if (Object.keys(data).length === 0) {
+                container.innerHTML = '<div class="loading">No data available yet...</div>';
+                return;
+            }
+
+            const cards = Object.values(data).map(pair => {
+                const trendClass = pair.trend === 'bullish' ? 'trend-bullish' : 'trend-bearish';
+                
+                return `
+                    <div class="card">
+                        <div class="pair-name">${pair.pair}</div>
+                        <div class="price">${pair.current_price.toFixed(5)}</div>
+                        
+                        <div class="signal">
+                            <div class="signal-label">Signal:</div>
+                            <div class="signal-value">${pair.hourly_signal}</div>
+                        </div>
+                        
+                        <div class="signal">
+                            <div class="signal-label">Trend:</div>
+                            <div class="signal-value ${trendClass}">${pair.trend || 'N/A'}</div>
+                        </div>
+                        
+                        <div class="signal">
+                            <div class="signal-label">Volatility:</div>
+                            <div class="signal-value">${pair.volatility}</div>
+                        </div>
+                        
+                        <div class="last-update">Updated: ${pair.last_update}</div>
+                    </div>
+                `;
+            }).join('');
+
+            container.innerHTML = `<div class="grid">${cards}</div>`;
+        }
+
+        // Initial fetch
+        fetchData();
+        
+        // Update every 30 seconds
+        setInterval(fetchData, 30000);
+    </script>
+</body>
+</html>
